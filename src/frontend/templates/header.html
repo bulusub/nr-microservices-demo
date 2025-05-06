@@ -1,17 +1,9 @@
-<!--
- Copyright 2020 Google LLC
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+<!-- 
+    Copyright 2020 Google LLC
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
 -->
 
 {{ define "header" }}
@@ -42,6 +34,7 @@
     {{ else }}
     <link rel='shortcut icon' type='image/x-icon' href='/static/favicon.ico' />
     {{ end }}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Include jQuery -->
 </head>
 
 <body>
@@ -62,7 +55,7 @@
                         <div class="h-control">
                             <span class="icon currency-icon"> {{ renderCurrencyLogo $.user_currency}}</span>
                             <form method="POST" class="controls-form" action="/setCurrency" id="currency_form" >
-                                <select name="currency_code" onchange="document.getElementById('currency_form').submit();">
+                                <select name="currency_code" id="currency_select" onchange="changeCurrency();">
                                         {{range $.currencies}}
                                     <option value="{{.}}" {{if eq . $.user_currency}}selected="selected"{{end}}>{{.}}</option>
                                     {{end}}
@@ -76,7 +69,7 @@
                     <a href="/cart" class="cart-link">
                         <img src="/static/icons/Hipster_CartIcon.svg" alt="Cart icon" class="logo" title="Cart" />
                         {{ if $.cart_size }}
-                        <span class="cart-size-circle">{{$.cart_size}}</span>
+                        <span class="cart-size-circle" id="cart_size">{{$.cart_size}}</span>
                         {{ end }}
                     </a>
                 </div>
@@ -84,4 +77,46 @@
         </div>
 
     </header>
-    {{end}}
+
+    <script>
+        // Change currency using AJAX
+        function changeCurrency() {
+            var currencyCode = $('#currency_select').val();
+            
+            $.ajax({
+                url: '/setCurrency',
+                method: 'POST',
+                data: { currency_code: currencyCode },
+                success: function(response) {
+                    console.log('Currency updated successfully.');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating currency:', error);
+                }
+            });
+        }
+
+        // Update cart size with AJAX
+        function updateCartSize() {
+            $.ajax({
+                url: '/api/cart/size',
+                method: 'GET',
+                success: function(response) {
+                    // Update the cart size in the DOM
+                    $('#cart_size').text(response.cartSize);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching cart size:', error);
+                }
+            });
+        }
+
+        // Call updateCartSize on page load to initialize cart size
+        $(document).ready(function() {
+            updateCartSize();
+        });
+    </script>
+
+{{end}}
+</body>
+</html>
